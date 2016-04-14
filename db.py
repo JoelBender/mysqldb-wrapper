@@ -25,7 +25,7 @@ db_connection_timeout = 600.0   # after ten minutes, close the connection
 db_connection_pool = {}
 db_connection_activity = {}
 db_connection_pool_lock = threading.Lock()
-db_cursor_class = MySQLdb.cursors.DictCursor
+db_cursor_class = MySQLdb.cursors.Cursor
 
 
 @bacpypes_debugging
@@ -82,13 +82,20 @@ def get_connection():
 
                     db_connection_pool[current_thread] = db_connection
         else:
+            if _debug: get_connection._debug("    - db_connection_kwargs: %r", db_connection_kwargs)
+
             # create a new connection, add it to the pool, and return it
             db_connection = MySQLdb.connect(**db_connection_kwargs)
             if not db_connection:
                 _log.error("failed to connect")
                 sys.exit(1)
+            if _debug: get_connection._debug("    - new connection: %r", db_connection)
 
+            # save it in the pool
             db_connection_pool[current_thread] = db_connection
+
+            # turn on autocommit
+            db_connection.autocommit(True)
 
         # update the activity
         db_connection_activity[current_thread] = now
@@ -125,6 +132,7 @@ def execute(*args, **kwargs):
 
     # all done with the local cursor
     if local_cursor:
+        if _debug: execute._debug("    - close local cursor")
         local_cursor.close()
 
     # might return a count
@@ -156,6 +164,7 @@ def fetch_one(*args, **kwargs):
 
     # all done with the local cursor
     if local_cursor:
+        if _debug: fetch_one._debug("    - close local cursor")
         local_cursor.close()
 
     # might return a count
@@ -191,6 +200,7 @@ def fetch_all(*args, **kwargs):
 
     # all done with the local cursor
     if local_cursor:
+        if _debug: fetch_all._debug("    - close local cursor")
         local_cursor.close()
 
     # return the list
@@ -226,6 +236,7 @@ def yield_rows(*args, **kwargs):
 
     # all done with the local cursor
     if local_cursor:
+        if _debug: yield_rows._debug("    - close local cursor")
         local_cursor.close()
 
 
@@ -262,6 +273,7 @@ def yield_values(*args, **kwargs):
 
     # all done with the local cursor
     if local_cursor:
+        if _debug: yield_values._debug("    - close local cursor")
         local_cursor.close()
 
 
@@ -316,6 +328,7 @@ def yield_objects(*args, **kwargs):
 
     # all done with the local cursor
     if local_cursor:
+        if _debug: yield_objects._debug("    - close local cursor")
         local_cursor.close()
 
 
@@ -351,6 +364,7 @@ def fetch_n(n, *args, **kwargs):
 
     # all done with the local cursor
     if local_cursor:
+        if _debug: fetch_n._debug("    - close local cursor")
         local_cursor.close()
 
     return rslt
@@ -388,6 +402,7 @@ def fetch_value(*args, **kwargs):
 
     # all done with the local cursor
     if local_cursor:
+        if _debug: fetch_value._debug("    - close local cursor")
         local_cursor.close()
 
     # might return a count
@@ -427,6 +442,7 @@ def fetch_values(*args, **kwargs):
 
     # all done with the local cursor
     if local_cursor:
+        if _debug: fetch_values._debug("    - close local cursor")
         local_cursor.close()
 
     # might return a count
